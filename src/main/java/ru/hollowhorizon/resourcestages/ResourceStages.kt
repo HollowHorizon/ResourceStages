@@ -25,7 +25,6 @@ object ResourceStages {
         MinecraftForge.EVENT_BUS.addListener<StagesSyncedEvent> {
             ResourceStagesPack.close()
             (Minecraft.getInstance().textureManager as ITextureManager).`resourceStages$resetPaths`(ResourceStagesPack.allResources)
-            //Minecraft.getInstance().reloadResourcePacks()
         }
     }
 
