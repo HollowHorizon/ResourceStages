@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "ru.hollowhorizon.resourcestages.mixins",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "ResourceStages.refmap.json",
+  "mixins": [
+  ],
+  "client": [
+    "TextureManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
