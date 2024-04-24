@@ -4,7 +4,7 @@ license = "All Rights Reserved"
 [[mods]]
 modId = "resourcestages"
 version = "${file.jarVersion}"
-displayName = "Hollow Engine" # Don't change it! This may break the game!
+displayName = "Resource Stages"
 description = '''
 GameStages Addon, that loads resourcepack for your last stage.
 '''
