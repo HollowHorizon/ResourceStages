@@ -7,7 +7,7 @@
   "mixins": [
   ],
   "client": [
-    "TextureManagerMixin"
+    "MinecraftMixin"
   ],
   "injectors": {
     "defaultRequire": 1
