@@ -20,27 +20,27 @@ import java.util.concurrent.CompletableFuture;
 
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin implements IReloadNoScreen {
-    @Shadow
+    @Shadow(aliases = "f_91024_")
     @Nullable
     private CompletableFuture<Void> pendingReload;
 
-    @Shadow
+    @Shadow(aliases = "f_91081_")
     @Nullable
     private Overlay overlay;
 
-    @Shadow
+    @Shadow(aliases = "f_91038_")
     @Final
     private PackRepository resourcePackRepository;
 
-    @Shadow
+    @Shadow(aliases = "f_167847_")
     @Final
     private ResourceLoadStateTracker reloadStateTracker;
 
-    @Shadow
+    @Shadow(aliases = "f_91036_")
     @Final
     private ReloadableResourceManager resourceManager;
 
-    @Shadow
+    @Shadow(aliases = "f_90983_")
     @Final
     private static CompletableFuture<Unit> RESOURCE_RELOAD_INITIAL_TASK;
 
