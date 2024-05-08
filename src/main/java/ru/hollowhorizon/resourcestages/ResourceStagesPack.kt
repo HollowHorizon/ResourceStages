@@ -6,19 +6,20 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.PackResources
 import net.minecraft.server.packs.PackType
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer
+import net.minecraft.server.packs.resources.IoSupplier
 import net.minecraftforge.fml.ModList
+import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Predicate
 
 object ResourceStagesPack : PackResources {
     private val resourcesFolder
         get() = ResourceStages.MOD_FOLDER.resolve(
             ResourceStages.stages.lastOrNull() ?: "default"
         )
-    val resourceMap = ConcurrentHashMap<ResourceLocation, IResourceStreamSupplier>()
+    val resourceMap = ConcurrentHashMap<ResourceLocation, IResourceStreamSupplier?>()
 
     val allResources
         get() = resourcesFolder.parentFile.walk()
@@ -33,40 +34,29 @@ object ResourceStagesPack : PackResources {
                 ResourceLocation(path)
             }.distinct().toList()
 
-    override fun getRootResource(pFileName: String): InputStream {
-        throw FileNotFoundException(pFileName)
-    }
-
-    override fun getResource(pType: PackType, pLocation: ResourceLocation): InputStream {
+    override fun getResource(pType: PackType, pLocation: ResourceLocation): IoSupplier<InputStream>? {
         return resourceMap.computeIfAbsent(pLocation) {
             val path = resourcesFolder.resolve(it.namespace).resolve(it.path)
-            IResourceStreamSupplier.create(path::exists, path::inputStream)
-        }.create()
+
+            IResourceStreamSupplier.create(path)
+        }
     }
 
-    override fun getResources(
-        pType: PackType,
+    override fun listResources(
+        pPackType: PackType,
         pNamespace: String,
         pPath: String,
-        pFilter: Predicate<ResourceLocation>,
-    ): MutableCollection<ResourceLocation> {
-        return resourcesFolder.walk()
-            .filter { it.isFile }
-            .map {
+        pResourceOutput: PackResources.ResourceOutput,
+    ) {
+        resourcesFolder.resolve(pNamespace).resolve(pPath).walk().forEach {
+            if (it.isFile) {
                 var path = it.canonicalPath.substringAfter(resourcesFolder.canonicalPath).replace('\\', '/')
                 if (path.startsWith('/')) path = path.substring(1)
 
                 path = path.replaceFirst('/', ':')
-
-                ResourceLocation(path)
+                pResourceOutput.accept(ResourceLocation(path), IResourceStreamSupplier.create(it))
             }
-            .filter { it.path.startsWith(pNamespace) }
-            .filter { pFilter.test(it) }.toMutableSet()
-    }
-
-    override fun hasResource(pType: PackType, pLocation: ResourceLocation): Boolean {
-        val path = resourcesFolder.resolve(pLocation.namespace).resolve(pLocation.path)
-        return path.exists()
+        }
     }
 
     override fun getNamespaces(pType: PackType): MutableSet<String> =
@@ -86,26 +76,29 @@ object ResourceStagesPack : PackResources {
         return null
     }
 
-    override fun getName() = "Resource Stages Data"
+    override fun packId() = "Resource Stages Data"
 
     override fun close() {
         resourceMap.clear()
     }
+
+    override fun getRootResource(vararg pElements: String): IoSupplier<InputStream> {
+        throw FileNotFoundException(pElements.joinToString())
+    }
 }
 
-interface IResourceStreamSupplier {
-    fun exists(): Boolean
-
+interface IResourceStreamSupplier : IoSupplier<InputStream> {
     @Throws(IOException::class)
-    fun create(): InputStream
+    override fun get(): InputStream
 
     companion object {
-        fun create(exists: () -> Boolean, streamable: () -> InputStream): IResourceStreamSupplier {
+        fun create(file: File): IResourceStreamSupplier? = if (file.exists()) create { file.inputStream() } else null
+
+        fun create(streamable: () -> InputStream): IResourceStreamSupplier {
             return object : IResourceStreamSupplier {
-                override fun exists() = exists()
 
                 @Throws(IOException::class)
-                override fun create() = streamable()
+                override fun get() = streamable()
             }
         }
     }

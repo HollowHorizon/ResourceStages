@@ -4,7 +4,7 @@ import net.darkhax.gamestages.data.GameStageSaveHandler
 import net.darkhax.gamestages.event.StagesSyncedEvent
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
-import net.minecraft.server.packs.metadata.pack.PackMetadataSection
+import net.minecraft.server.packs.PackType
 import net.minecraft.server.packs.repository.Pack
 import net.minecraft.server.packs.repository.PackSource
 import net.minecraftforge.client.event.RenderGuiOverlayEvent
@@ -36,12 +36,17 @@ object ResourceStages {
     }
 
     fun registerPacks(event: AddPackFindersEvent) {
-        event.addRepositorySource { adder, creator ->
-            adder.accept(
-                creator.create(
-                    ResourceStagesPack.name, Component.literal(ResourceStagesPack.name), true, { ResourceStagesPack },
-                    PackMetadataSection(Component.translatable("fml.resources.modresources"), 9),
-                    Pack.Position.TOP, PackSource.BUILT_IN, false
+        event.addRepositorySource { packs ->
+            packs.accept(
+                Pack.create(
+                    ResourceStagesPack.packId(),
+                    Component.literal(ResourceStagesPack.packId()),
+                    true,
+                    { ResourceStagesPack },
+                    Pack.readPackInfo(ResourceStagesPack.packId()) { ResourceStagesPack }
+                        ?: throw NullPointerException("No pack info available"),
+                    PackType.CLIENT_RESOURCES,
+                    Pack.Position.TOP, true, PackSource.BUILT_IN
                 )
             )
         }
@@ -54,7 +59,7 @@ object ResourceStages {
         val window = event.window
         val width = window.guiScaledWidth
         val height = window.guiScaledHeight
-        ReloadOverlay.render(event.poseStack, width, height)
+        ReloadOverlay.render(event.guiGraphics, width, height)
     }
 
     val stages get() = GameStageSaveHandler.getClientData()?.stages?.sorted() ?: emptyList()
